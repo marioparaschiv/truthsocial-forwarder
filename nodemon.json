@@ -1,0 +1,13 @@
+{
+	"ext": "*.*",
+	"exec": "swc src -d dist -D --delete-dir-on-start --strip-leading-paths && bun dist/index.js",
+	"ignore": [
+		"dist",
+		".git",
+		"node_modules",
+		"messages",
+		"messages.json",
+		"cookies.json",
+		"data.json"
+	]
+}

@@ -1,0 +1,7 @@
+{
+	"debug": true,
+	"webhook": "https://discord.com/api/webhooks/xxx/xxx",
+	"user": "107780257626128497",
+	"startFromBlogId": "112420170022010000",
+	"delay": 60000
+}
