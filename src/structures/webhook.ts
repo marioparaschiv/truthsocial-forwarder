@@ -41,7 +41,7 @@ class Webhook {
 				});
 			});
 		} catch (e) {
-			Logger.error('Failed to send to webhook!', e);
+			console.error('Failed to send to webhook!', e);
 		}
 	};
 }

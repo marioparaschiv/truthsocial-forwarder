@@ -1,7 +1,7 @@
 import { NodeHtmlMarkdown } from 'node-html-markdown';
 import { createLogger } from '~/structures/logger';
+import store from '~/structures/store';
 import { parseHtmlEntities } from '~/utilities';
-import config from '~/../config.json';
 
 const BASE_URL = 'https://truthsocial.com/api/v1';
 
@@ -18,6 +18,7 @@ export interface Blog {
 	id: string,
 	url: string,
 	content: string,
+	created_at: string,
 	account: {
 		username: string,
 		display_name: string,
@@ -36,30 +37,34 @@ export async function getBlogs(id: string): Promise<Blog[]> {
 
 	try {
 
-		let lastId = 1337;
+		let lastBlog: Blog;
+
+		store.data['lastChecked'] ??= new Date().setDate(new Date().getDate() - 1);
+		const lastChecked = store.data['lastChecked'];
 
 		do {
-			console.log('fetching, max id = ', lastId);
-			const data = await fetch(BASE_URL + `/accounts/${id}/statuses?exclude_replies=true&with_muted=true${lastId !== 1337 ? '&max_id=' + lastId : ''}`).then(r => r.json());
+			if (lastBlog && new Date(lastBlog.created_at) < new Date(lastChecked)) break;
 
-			// const payloads = Object.values(store.data);
-			const largestId = data.reduce((prev, current) => (prev && prev.id > current.id) ? prev : current, { id: null });
-			if (largestId.id < config.startFromBlogId) break;
+			console.log('fetching, max id = ', lastBlog?.id);
+			const data = await fetch(BASE_URL + `/accounts/${id}/statuses?exclude_replies=true&with_muted=false${lastBlog?.id ? '&max_id=' + lastBlog.id : ''}`).then(r => r.json());
+
+			store.data['lastChecked'] = new Date();
+
 
 			if (Array.isArray(data)) {
 				if (!data.length) break;
 
 				const lastIndex = data.length - 1;
-				lastId = data[lastIndex]?.id;
+				lastBlog = data[lastIndex];
 
 				result.push(...data);
 			}
-		} while (lastId);
+		} while (lastBlog.id);
 	} catch (error) {
 		logger.error(`Failed to fetch blogs for account ${id}:`, error);
 	}
 
-	return result;
+	return result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 }
 
 export async function getContentFromBlog(blog: Blog) {
@@ -74,6 +79,7 @@ export async function getFilesFromBlog(blog: Blog): Promise<File[]> {
 	for (const attachment of blog.media_attachments) {
 		try {
 			const file = await getFile(attachment.url);
+			if (!file) continue;
 
 			result.push(file);
 		} catch (error) {
@@ -85,7 +91,14 @@ export async function getFilesFromBlog(blog: Blog): Promise<File[]> {
 }
 
 export async function getFile(url: string): Promise<File> {
+	logger.info(`Download file from ${url}...`);
 	const buf = await fetch(url).then(r => r.arrayBuffer());
+	logger.info(`Downloaded file from ${url}.`);
+
+	if ((buf.byteLength / 1024) >= 25000) {
+		logger.warn("Skipping file as it is over Discord's limit.");
+		return null;
+	};
 
 	return {
 		name: url.split('/').pop(),

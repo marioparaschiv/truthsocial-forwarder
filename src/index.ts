@@ -26,7 +26,7 @@ async function check() {
 			// @ts-ignore
 			username: blog.account.display_name,
 			content: [
-				' ',
+				blog.media_attachments.length !== files.length && '**Some media was redacted due to the file size being too big.**\n',
 				content,
 				`[\`↖\`](<${blog.url}>)`
 			].filter(Boolean).join('\n')

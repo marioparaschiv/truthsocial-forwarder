@@ -3,7 +3,7 @@ import type { Blog } from '~/truthsocial';
 import { join } from 'path';
 
 class Store {
-	data: Record<string, Blog> = {};
+	data: Record<string, Blog & any> = {};
 	path = join(__dirname, '..', '..', 'data.json');
 
 	constructor() {
