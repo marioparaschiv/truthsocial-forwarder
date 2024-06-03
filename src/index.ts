@@ -26,8 +26,9 @@ async function check() {
 			// @ts-ignore
 			username: blog.account.display_name,
 			content: [
-				blog.media_attachments.length !== files.length && '**Some media was redacted due to the file size being too big.**\n',
-				content,
+				content || '*No content.*',
+				blog.media_attachments.length !== files.length && '\n**Some media was redacted due to the file size being too big.**',
+				blog.media_attachments.length !== files.length && blog.media_attachments.filter(attachment => !files.some(file => file.url === attachment.url)).map(attachment => attachment.url),
 				`[\`↖\`](<${blog.url}>)`
 			].filter(Boolean).join('\n')
 		}, files);

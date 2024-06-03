@@ -30,6 +30,7 @@ export interface Blog {
 export interface File {
 	name: string;
 	buffer: Buffer;
+	url: string;
 }
 
 export async function getBlogs(id: string): Promise<Blog[]> {
@@ -64,7 +65,7 @@ export async function getBlogs(id: string): Promise<Blog[]> {
 		logger.error(`Failed to fetch blogs for account ${id}:`, error);
 	}
 
-	return result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+	return result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 }
 
 export async function getContentFromBlog(blog: Blog) {
@@ -102,6 +103,7 @@ export async function getFile(url: string): Promise<File> {
 
 	return {
 		name: url.split('/').pop(),
+		url,
 		buffer: Buffer.from(buf)
 	};
 }
